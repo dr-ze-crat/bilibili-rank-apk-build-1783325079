@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 安装依赖
+      - name: 安装依赖（不要安装 python-for-android，用 Buildozer 自带的）
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
@@ -25,17 +25,10 @@ jobs:
             libncurses-dev cmake libffi-dev libssl-dev python3-dev
           pip install --upgrade pip buildozer cython
 
-      - name: 构建并捕获日志
+      - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          set -o pipefail
-          buildozer android debug 2>&1 | tee buildozer_output.log
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== Buildozer error log ==="
-            find .buildozer -name "*.log" -exec echo "--- {} ---" \; -exec tail -30 {} \; 2>/dev/null || true
-            exit $EXIT_CODE
-          fi
+          buildozer android debug 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
