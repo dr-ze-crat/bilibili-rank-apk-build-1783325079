@@ -1,0 +1,48 @@
+name: Build APK
+
+on:
+  workflow_dispatch:          # 手动触发
+  push:
+    branches: [ main ]
+    paths:
+      - 'main.py'
+      - 'buildozer.spec'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            git zip unzip openjdk-17-jdk \
+            python3-pip autoconf libtool \
+            pkg-config zlib1g-dev libncurses5-dev \
+            libncursesw5-dev libtinfo5 cmake \
+            libffi-dev libssl-dev
+          pip install --upgrade pip buildozer cython
+
+      - name: 构建 APK
+        run: |
+          cd ${{ github.workspace }}
+          # Buildozer 需要设置 ANDROIDSDK 和 ANDROIDNDK
+          export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
+          export ANDROIDNDK="$HOME/.buildozer/android/platform/android-ndk-r25b"
+          buildozer android debug 2>&1
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: B站排行榜爬虫-APK
+          path: bin/*.apk
+          if-no-files-found: error
