@@ -27,17 +27,15 @@ jobs:
           sudo apt-get install -y -qq \
             git zip unzip openjdk-17-jdk \
             python3-pip autoconf libtool \
-            pkg-config zlib1g-dev libncurses5-dev \
-            libncursesw5-dev libtinfo5 cmake \
+            pkg-config zlib1g-dev libncurses-dev \
+            libncursesw5-dev cmake \
             libffi-dev libssl-dev
           pip install --upgrade pip buildozer cython
 
       - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          # Buildozer 需要设置 ANDROIDSDK 和 ANDROIDNDK
-          export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
-          export ANDROIDNDK="$HOME/.buildozer/android/platform/android-ndk-r25b"
+          # Buildozer 会自动下载 Android SDK/NDK
           buildozer android debug 2>&1
 
       - name: 上传 APK 产物

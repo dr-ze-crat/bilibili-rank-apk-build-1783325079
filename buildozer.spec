@@ -25,10 +25,10 @@ requirements = python3,kivy,requests,openpyxl,plyer,android
 android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES
 
 # Android API 级别
-android.api = 33
+android.api = 34
 android.minapi = 21
-android.sdk = 33
-android.ndk = 25b
+android.sdk = 34
+android.ndk = 27b
 android.ndk_path =
 
 # 是否启用 AndroidX（新版 Android 支持）
@@ -70,8 +70,7 @@ android.archs = arm64-v8a
 log_level = 2
 
 # 应用需求
-presplash.bmp = presplash.png
-presplash.filename =
+presplash.filename = presplash.png
 presplash.color = #1E1E24
 
 # 支持的平台
