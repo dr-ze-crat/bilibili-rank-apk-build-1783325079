@@ -8,6 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROIDSDK: /usr/local/lib/android/sdk
+      ANDROIDNDK: /usr/local/lib/android/sdk/ndk/25.2.9519653
+      ANDROIDAPI: 33
+      ANDROIDMINAPI: 21
     steps:
       - uses: actions/checkout@v4
 
@@ -16,31 +21,34 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 安装系统依赖
+      - name: 安装依赖
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
-            git zip unzip openjdk-17-jdk \
-            python3-pip autoconf libtool \
-            pkg-config zlib1g-dev libncurses-dev \
-            cmake libffi-dev libssl-dev
+            git zip unzip openjdk-17-jdk python3-pip \
+            autoconf libtool pkg-config zlib1g-dev \
+            libncurses-dev cmake libffi-dev libssl-dev
           pip install --upgrade pip buildozer cython
 
-      - name: 构建 APK
+      - name: 配置 SDK 许可并构建
         run: |
           cd ${{ github.workspace }}
-          export P4A_VERBOSE=1
-          set +e
+          # 接受所有 SDK 许可
+          yes | $ANDROIDSDK/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          yes | $ANDROIDSDK/tools/bin/sdkmanager --licenses 2>/dev/null || true
+          yes | $ANDROIDSDK/cmdline-tools/*/bin/sdkmanager --licenses 2>/dev/null || true
+          # 列出已安装的平台
+          echo "=== SDK 平台 ==="
+          ls $ANDROIDSDK/platforms/ 2>/dev/null || echo "No platforms dir"
+          echo "=== SDK Build-tools ==="
+          ls $ANDROIDSDK/build-tools/ 2>/dev/null || echo "No build-tools dir"
+          echo "=== NDK ==="
+          ls $ANDROIDSDK/ndk/ 2>/dev/null || echo "No ndk dir"
+          # 如果目标平台不存在则安装
+          $ANDROIDSDK/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" 2>/dev/null || true
+          $ANDROIDSDK/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" 2>/dev/null || true
+          # 构建
           buildozer android debug 2>&1
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== Buildozer failed (exit code $EXIT_CODE). Checking p4a logs... ==="
-            BUILD_DIR=".buildozer/android/platform/build-arm64-v8a"
-            if [ -d "$BUILD_DIR" ]; then
-              find "$BUILD_DIR" -name "*.log" -not -path "*/recipes/*" -exec echo "--- {} ---" \; -exec tail -80 {} \;
-            fi
-            exit $EXIT_CODE
-          fi
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
