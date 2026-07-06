@@ -17,7 +17,7 @@ source.include_exts = py,png,jpg,kv,atlas
 version = 1.0.0
 
 # 需求
-requirements = python3,kivy,requests,openpyxl,plyer,pyjnius,openssl,hostpython3
+requirements = python3,kivy,requests,openpyxl,plyer,pyjnius
 
 # 权限
 android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES
