@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -22,37 +22,24 @@ jobs:
           sudo apt-get install -y -qq \
             git zip unzip openjdk-17-jdk python3-pip \
             autoconf automake libtool pkg-config zlib1g-dev \
-            libncurses-dev cmake libffi-dev libssl-dev \
-            python3-dev
-          pip install --upgrade pip buildozer cython python-for-android
+            libncurses-dev cmake libffi-dev libssl-dev python3-dev
+          pip install --upgrade pip buildozer cython
 
-      - name: Buildozer 准备 SDK/NDK 并编译
+      - name: 构建并捕获日志
         run: |
           cd ${{ github.workspace }}
-          buildozer android debug 2>&1 || true
-
-      - name: 手动修复并重新运行 p4a apk
-        run: |
-          cd ${{ github.workspace }}
-          export SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          export NDK_DIR="$HOME/.buildozer/android/platform/android-ndk-r25b"
-          [ -d "$SDK_DIR" ] || SDK_DIR="/usr/local/lib/android/sdk"
-          [ -d "$NDK_DIR" ] || NDK_DIR="/usr/local/lib/android/sdk/ndk/27.3.13750724"
-
-          # 查看 p4a apk 子命令
-          python -m pythonforandroid.toolchain apk --help 2>&1 || true
-
-      - name: 查找 APK
-        run: |
-          find ~/.local/share/python-for-android -name "*.apk" 2>/dev/null
-          find ${{ github.workspace }} -name "*.apk" 2>/dev/null
-          find ${{ github.workspace }}/.buildozer -name "*.apk" 2>/dev/null
-          ls -la ${{ github.workspace }}/bin/ 2>/dev/null || true
+          set -o pipefail
+          buildozer android debug 2>&1 | tee buildozer_output.log
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=== Buildozer error log ==="
+            find .buildozer -name "*.log" -exec echo "--- {} ---" \; -exec tail -30 {} \; 2>/dev/null || true
+            exit $EXIT_CODE
+          fi
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
-          path: |
-            **/*.apk
-          if-no-files-found: ignore
+          path: bin/*.apk
+          if-no-files-found: error
