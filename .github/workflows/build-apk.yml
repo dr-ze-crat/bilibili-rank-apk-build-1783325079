@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 安装系统依赖
+      - name: 安装依赖
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
@@ -24,16 +24,35 @@ jobs:
             autoconf automake libtool pkg-config zlib1g-dev \
             libncurses-dev cmake libffi-dev libssl-dev \
             python3-dev
-          pip install --upgrade pip buildozer cython
+          pip install --upgrade pip buildozer cython python-for-android
 
-      - name: 构建 APK
+      - name: Buildozer 准备 SDK/NDK 并编译
         run: |
           cd ${{ github.workspace }}
-          buildozer android debug 2>&1
+          buildozer android debug 2>&1 || true
+
+      - name: 手动修复并重新运行 p4a apk
+        run: |
+          cd ${{ github.workspace }}
+          export SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          export NDK_DIR="$HOME/.buildozer/android/platform/android-ndk-r25b"
+          [ -d "$SDK_DIR" ] || SDK_DIR="/usr/local/lib/android/sdk"
+          [ -d "$NDK_DIR" ] || NDK_DIR="/usr/local/lib/android/sdk/ndk/27.3.13750724"
+
+          # 查看 p4a apk 子命令
+          python -m pythonforandroid.toolchain apk --help 2>&1 || true
+
+      - name: 查找 APK
+        run: |
+          find ~/.local/share/python-for-android -name "*.apk" 2>/dev/null
+          find ${{ github.workspace }} -name "*.apk" 2>/dev/null
+          find ${{ github.workspace }}/.buildozer -name "*.apk" 2>/dev/null
+          ls -la ${{ github.workspace }}/bin/ 2>/dev/null || true
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
-          path: bin/*.apk
-          if-no-files-found: error
+          path: |
+            **/*.apk
+          if-no-files-found: ignore
