@@ -11,16 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 使用 Buildozer Docker 镜像构建 APK
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          workdir: .
-          buildozer_version: stable
+      - name: 使用官方 Buildozer Docker 镜像构建
+        run: |
+          docker pull kivy/buildozer:latest 2>&1 | tail -3
+          docker run \
+            -v ${{ github.workspace }}:/home/user/hostcwd \
+            -v ~/.buildozer:/home/user/.buildozer \
+            kivy/buildozer:latest \
+            android debug 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
           if-no-files-found: error
