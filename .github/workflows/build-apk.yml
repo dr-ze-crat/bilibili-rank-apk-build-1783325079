@@ -35,7 +35,7 @@ jobs:
       - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          # Buildozer 会自动下载 Android SDK/NDK
+          # Buildozer 会自动下载 Android SDK/NDK 并构建 APK
           buildozer android debug 2>&1
 
       - name: 上传 APK 产物

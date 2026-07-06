@@ -32,6 +32,9 @@ android.ndk_path =
 # 是否启用 AndroidX（新版 Android 支持）
 android.enable_androidx = True
 
+# 自动接受 SDK 许可
+android.accept_sdk_license = True
+
 # 应用图标（可选，留空使用默认）
 android.icon = icon.png
 
