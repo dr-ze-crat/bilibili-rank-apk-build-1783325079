@@ -29,7 +29,10 @@ jobs:
       - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          buildozer android debug 2>&1
+          # 增加 p4a 日志级别以显示详细错误
+          export P4A_VERBOSE=1
+          # 用 debug 级别运行
+          buildozer android debug -v --debug 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
