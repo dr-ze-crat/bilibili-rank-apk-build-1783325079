@@ -26,12 +26,10 @@ jobs:
             python3-dev
           pip install --upgrade pip buildozer cython
 
-      - name: 运行 p4a 直接查看错误
+      - name: 安装 p4a 并查看详细错误
         run: |
           cd ${{ github.workspace }}
-          # 首次运行 buildozer 初始化
-          buildozer init 2>/dev/null || true
-          # 直接调用 p4a
+          pip install python-for-android 2>&1 | tail -3
           python -m pythonforandroid.toolchain create \
             --dist_name=bilibiliranking \
             --bootstrap=sdl2 \
@@ -41,7 +39,7 @@ jobs:
             --sdk-dir=/usr/local/lib/android/sdk \
             --ndk-dir=/usr/local/lib/android/sdk/ndk/27.3.13750724 \
             --android-api=33 \
-            --debug 2>&1
+            --debug 2>&1 || true
 
       - name: 上传结果
         uses: actions/upload-artifact@v4
