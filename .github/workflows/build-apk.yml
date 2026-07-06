@@ -24,29 +24,16 @@ jobs:
             autoconf libtool pkg-config zlib1g-dev \
             libncurses-dev cmake libffi-dev libssl-dev \
             python3-dev
-          pip install --upgrade pip buildozer cython
+          pip install --upgrade pip buildozer cython python-for-android
 
-      - name: 安装 p4a 并查看详细错误
+      - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          pip install python-for-android 2>&1 | tail -3
-          python -m pythonforandroid.toolchain create \
-            --dist_name=bilibiliranking \
-            --bootstrap=sdl2 \
-            --requirements=python3,kivy \
-            --arch=arm64-v8a \
-            --ndk-api=21 \
-            --sdk-dir=/usr/local/lib/android/sdk \
-            --ndk-dir=/usr/local/lib/android/sdk/ndk/27.3.13750724 \
-            --android-api=33 \
-            --debug 2>&1 || true
+          buildozer android debug 2>&1
 
-      - name: 上传结果
+      - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: |
-            *.apk
-            *.log
-            .buildozer/**/*.log
-          if-no-files-found: ignore
+          name: B站排行榜爬虫-APK
+          path: bin/*.apk
+          if-no-files-found: error

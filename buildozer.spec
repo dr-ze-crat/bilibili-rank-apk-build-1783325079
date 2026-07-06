@@ -17,7 +17,7 @@ source.include_exts = py,png,jpg,kv,atlas
 version = 1.0.0
 
 # 需求
-requirements = python3,kivy,requests,openpyxl,plyer,pyjnius
+requirements = python3,kivy,requests,openpyxl,plyer,pyjnius,android
 
 # 权限
 android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES
@@ -25,7 +25,6 @@ android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_
 # Android API 级别
 android.api = 33
 android.minapi = 21
-android.sdk = 33
 android.ndk = 25b
 android.ndk_path =
 
