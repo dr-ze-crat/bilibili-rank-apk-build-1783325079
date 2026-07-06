@@ -1,20 +1,15 @@
 name: Build APK
 
 on:
-  workflow_dispatch:          # 手动触发
+  workflow_dispatch:
   push:
     branches: [ main ]
-    paths:
-      - 'main.py'
-      - 'buildozer.spec'
-      - '.github/workflows/build-apk.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -28,17 +23,15 @@ jobs:
             git zip unzip openjdk-17-jdk \
             python3-pip autoconf libtool \
             pkg-config zlib1g-dev libncurses-dev \
-            libncursesw5-dev cmake \
-            libffi-dev libssl-dev
+            cmake libffi-dev libssl-dev
           pip install --upgrade pip buildozer cython
 
       - name: 构建 APK
         run: |
           cd ${{ github.workspace }}
-          # Buildozer 会自动下载 Android SDK/NDK 并构建 APK
           buildozer android debug 2>&1
 
-      - name: 上传 APK 产物
+      - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
