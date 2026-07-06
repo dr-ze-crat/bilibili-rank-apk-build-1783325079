@@ -11,28 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Python
-        uses: actions/setup-python@v5
+      - name: 使用 Buildozer Docker 镜像构建 APK
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
-          python-version: '3.11'
-
-      - name: 安装依赖（不要安装 python-for-android，用 Buildozer 自带的）
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            git zip unzip openjdk-17-jdk python3-pip \
-            autoconf automake libtool pkg-config zlib1g-dev \
-            libncurses-dev cmake libffi-dev libssl-dev python3-dev
-          pip install --upgrade pip buildozer cython
-
-      - name: 构建 APK
-        run: |
-          cd ${{ github.workspace }}
-          buildozer android debug 2>&1
+          workdir: .
+          buildozer_version: stable
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
-          path: bin/*.apk
+          path: ${{ steps.buildozer.outputs.filename }}
           if-no-files-found: error
