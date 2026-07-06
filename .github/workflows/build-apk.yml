@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 安装依赖
+      - name: 安装系统依赖
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
@@ -24,24 +24,26 @@ jobs:
             autoconf automake libtool pkg-config zlib1g-dev \
             libncurses-dev cmake libffi-dev libssl-dev \
             python3-dev libtool-bin
-          pip install --upgrade pip buildozer cython
-          pip install python-for-android
+          pip install --upgrade pip buildozer cython python-for-android
 
-      - name: 运行 buildozer 准备 SDK/NDK
+      - name: Buildozer 准备 SDK/NDK
         run: |
           cd ${{ github.workspace }}
+          # 让 buildozer 下载 SDK/NDK（仅首次需要）
           buildozer android debug 2>&1 || true
 
-      - name: 直接运行 p4a 查看详细错误
+      - name: p4a 构建 APK
         run: |
           cd ${{ github.workspace }}
           export SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
           export NDK_DIR="$HOME/.buildozer/android/platform/android-ndk-r25b"
-          # 如果 buildozer 没下载成功，用系统预装的
           [ -d "$SDK_DIR" ] || SDK_DIR="/usr/local/lib/android/sdk"
           [ -d "$NDK_DIR" ] || NDK_DIR="/usr/local/lib/android/sdk/ndk/27.3.13750724"
-          echo "Using SDK: $SDK_DIR"
-          echo "Using NDK: $NDK_DIR"
+
+          echo "SDK: $SDK_DIR"
+          echo "NDK: $NDK_DIR"
+
+          # 第1步：创建 dist
           python -m pythonforandroid.toolchain create \
             --dist_name=bilibiliranking \
             --bootstrap=sdl2 \
@@ -51,21 +53,31 @@ jobs:
             --sdk-dir="$SDK_DIR" \
             --ndk-dir="$NDK_DIR" \
             --android-api=33 \
-            --debug 2>&1 || true
+            --debug 2>&1 || exit 1
 
-      - name: 查找并上传 APK
+          # 第2步：生成 APK
+          python -m pythonforandroid.toolchain apk \
+            --debug \
+            --sdk-dir="$SDK_DIR" \
+            --ndk-dir="$NDK_DIR" \
+            --dist_dir="$HOME/.local/share/python-for-android/dists/bilibiliranking" \
+            --arch=arm64-v8a \
+            --bootstrap=sdl2 \
+            --requirements=python3,kivy,requests,openpyxl,plyer,pyjnius,android \
+            2>&1 || exit 1
+
+      - name: 查找 APK 文件
         run: |
-          echo "=== 查找 APK ==="
-          find / -name "*.apk" -type f 2>/dev/null
-          echo "=== 查找 dist 目录 ==="
-          find ~/.local/share/python-for-android -name "*.apk" 2>/dev/null || echo "No apk in p4a dist"
+          find ~/.local/share/python-for-android -name "*.apk" -type f
+          find /home/runner/work -name "*.apk" -type f
+          find ${{ github.workspace }} -name "*.apk" -type f
+          # 也查找 buildozer 的输出目录
+          find ${{ github.workspace }}/.buildozer -name "*.apk" -type f 2>/dev/null
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: B站排行榜爬虫-APK
           path: |
-            ~/.local/share/python-for-android/dists/*/build/outputs/apk/**/*.apk
             **/*.apk
-            bin/*.apk
-          if-no-files-found: continue
+          if-no-files-found: ignore
